@@ -1,7 +1,6 @@
 # Classificação de Doenças em Plantas com Deep Learning
 
 **Aluno:** Thomaz Ritter
-**Disciplina:** Deep Learning — Desafio Grau B
 
 ## Estrutura
 
