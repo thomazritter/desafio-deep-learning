@@ -32,17 +32,17 @@ A ideia do transfer learning é reutilizar uma rede já treinada e trocar a últ
 
 O resultado é que a rede já "sabe ver" imagens, e só precisa aprender a distinguir as nossas 38 classes específicas. Isso reduz bastante o tempo de treinamento e funciona bem mesmo com datasets menores.
 
-Em aula vimos três estratégias de fine-tuning: **Feature Extraction** (congela tudo, treina só o classificador final), **Fine-tuning Parcial** (congela camadas iniciais, treina as finais) e **Fine-tuning Completo** (treina tudo com learning rate menor). Optei por fine-tuning completo com LR de 1e-4. Escolhi esse valor por ser baixo o suficiente para não destruir os pesos pré-treinados, porém permite que todas as camadas se adaptem ao domínio.
+Em aula vimos três estratégias de fine-tuning. A **Feature Extraction** congela tudo e treina só o classificador final. O **Fine-tuning Parcial** congela camadas iniciais e treina as finais. E o **Fine-tuning Completo** treina tudo com learning rate menor. Optei por fine-tuning completo com LR de 1e-4. Escolhi esse valor por ser baixo o suficiente para não destruir os pesos pré-treinados, porém permite que todas as camadas se adaptem ao domínio.
 
 ### Por que ResNet especificamente?
 
 A família ResNet (He et al., 2016) introduziu uma inovação interessante, que são as **conexões residuais**. Em redes muito profundas, o sinal tende a se perder conforme passa por várias camadas, visto que o gradiente vai encolhendo. Isso seria o vanishing gradient. As conexões residuais criam "atalhos" que permitem o sinal pular camadas, resolvendo esse problema.
 
 Escolhi comparar duas versões:
-- **ResNet18** (11.7 milhões de parâmetros): mais leve e treina rápido
-- **ResNet50** (25.6 milhões de parâmetros): mais profunda e maior capacidade. Como visto em aula, a ResNet50 seria um ponto legal para transfer learning
+- **ResNet18**, com 11.7 milhões de parâmetros, mais leve e treina rápido
+- **ResNet50**, com 25.6 milhões de parâmetros, mais profunda e maior capacidade. Como visto em aula, a ResNet50 seria um ponto legal para transfer learning
 
-O objetivo aqui é avaliar um trade-off: mais parâmetros sempre significam melhores resultados? Nem sempre. Um modelo maior pode memorizar os dados de treino (overfitting) em vez de aprender padrões que generalizem. Vamos ver isso nos resultados em seguida.
+O objetivo aqui é avaliar um trade-off. Mais parâmetros sempre significam melhores resultados? Nem sempre. Um modelo maior pode memorizar os dados de treino (overfitting) em vez de aprender padrões que generalizem. Vamos ver isso nos resultados em seguida.
 
 ### E por que não usar Transformers?
 
@@ -151,7 +151,7 @@ As curvas de acurácia e loss ao longo das 10 épocas mostram três coisas impor
 
 ![Comparação dos Três Experimentos](imagens/curvas_comparativas.png)
 
-Nos três experimentos, a convergência foi rápida: já na primeira época a acurácia de validação ultrapassou 95%. A ResNet18 e ResNet50 com augmentation leve convergiram de forma suave, praticamente estabilizando a partir da época 6. A ResNet18 com augmentation agressiva convergiu mais devagar (91% na primeira época vs 95% das outras), o que faz sentido visto que as imagens transformadas são mais difíceis de classificar.
+Nos três experimentos, a convergência foi rápida, e já na primeira época a acurácia de validação ultrapassou 95%. A ResNet18 e ResNet50 com augmentation leve convergiram de forma suave, praticamente estabilizando a partir da época 6. A ResNet18 com augmentation agressiva convergiu mais devagar (91% na primeira época vs 95% das outras), o que faz sentido visto que as imagens transformadas são mais difíceis de classificar.
 
 ![Treino vs Validação - Análise de Overfitting](imagens/overfitting_analise.png)
 
@@ -171,7 +171,7 @@ Além disso, mais parâmetros significam mais tempo de treinamento por época (a
 
 Nos resultados, a ResNet18 (99.89%) superou a ResNet50 (99.83%). Ambas atingiram 99.99% no treino, porém a ResNet50 generalizou ligeiramente pior. Isso confirma que, para este dataset, a capacidade extra da ResNet50 não traz benefício. O gap treino-validação foi similar (0.10% vs 0.16%), indicando que nenhum dos dois modelos sofreu de overfitting severo.
 
-Na prática, a ResNet18 é a melhor escolha aqui: treina em metade do tempo, ocupa metade da memória e tem acurácia superior. Um modelo menor que roda no celular do usuário pode ter mais impacto do que um modelo enorme que precisa de um servidor.
+Na prática, a ResNet18 é a melhor escolha aqui porque treina em metade do tempo, ocupa metade da memória e tem acurácia superior. Um modelo menor que roda no celular do usuário pode ter mais impacto do que um modelo enorme que precisa de um servidor.
 
 ### 5.2 Data augmentation: quanto é suficiente?
 
@@ -200,7 +200,7 @@ Abaixo algumas limitações do trabalho:
 
 ## 6. Como colocar em produção
 
-Em aula olhamos o ciclo completo de deployment: APIs, containers e monitoramento de inferência. Treinar o modelo é metade do trabalho. A outra metade é tornar ele acessível e confiável em produção. Abaixo alguns itens que são importantes ao fazer deploy:
+Em aula olhamos o ciclo completo de deployment, passando por APIs, containers e monitoramento de inferência. Treinar o modelo é metade do trabalho. A outra metade é tornar ele acessível e confiável em produção.
 
 ### 6.1 API REST
 
@@ -230,13 +230,13 @@ Uma opção é converter o modelo para TorchScript ou ONNX, formatos otimizados 
 
 ### 6.3 Monitoramento
 
-Em produção, precisaríamos monitorar algumas coisas. A primeira é o data drift: as fotos dos usuários são parecidas com o treino? O PlantVillage tem fundo uniforme, e se começarem a chegar fotos com fundo complexo, a acurácia vai cair e precisamos detectar isso. Também é importante garantir que a latência de inferência fique abaixo de 500ms para uma boa experiência do usuário. Por fim, um feedback loop seria essencial, permitindo que usuários corrijam predições erradas e gerando dados rotulados para retreinamento periódico do modelo.
+Em produção, precisaríamos monitorar algumas coisas. A primeira é o data drift, ou seja, se as fotos dos usuários são parecidas com o treino. O PlantVillage tem fundo uniforme, e se começarem a chegar fotos com fundo complexo, a acurácia vai cair e precisamos detectar isso. Também é importante garantir que a latência de inferência fique abaixo de 500ms para uma boa experiência do usuário. Por fim, um feedback loop seria essencial, permitindo que usuários corrijam predições erradas e gerando dados rotulados para retreinamento periódico do modelo.
 
 ## 7. Conclusão
 
-No fim das contas, transfer learning com CNNs funcionou muito bem para o PlantVillage, com os três modelos passando de 99% de acurácia na validação. O que mais me surpreendeu foi que a ResNet18 (99.89%) bateu a ResNet50 (99.83%), mesmo tendo metade dos parâmetros. Isso reforça algo que já tinha lido mas nunca visto na prática: modelo maior nem sempre é melhor, especialmente quando o dataset não é enorme.
+No fim das contas, transfer learning com CNNs funcionou muito bem para o PlantVillage, com os três modelos passando de 99% de acurácia na validação. O que mais me surpreendeu foi que a ResNet18 (99.89%) bateu a ResNet50 (99.83%), mesmo tendo metade dos parâmetros. Isso reforça algo que já tinha lido mas nunca visto na prática, que modelo maior nem sempre é melhor, especialmente quando o dataset não é enorme.
 
-A augmentation agressiva fez o que era esperado, reduziu o gap entre treino e validação, mas no fim não melhorou o resultado. Faz sentido: o PlantVillage é um dataset de laboratório, então as transformações acabam dificultando o treino sem necessidade. Em fotos reais de campo, provavelmente o resultado seria diferente.
+A augmentation agressiva fez o que era esperado, reduziu o gap entre treino e validação, mas no fim não melhorou o resultado. Faz sentido, já que o PlantVillage é um dataset de laboratório, então as transformações acabam dificultando o treino sem necessidade. Em fotos reais de campo, provavelmente o resultado seria diferente.
 
 Para trabalhos futuros, quero testar com o PlantDoc (que tem fotos reais, não de laboratório) e ver se a augmentation agressiva compensa nesse cenário. Também seria legal incluir orquídeas no dataset, já que minha mãe cultiva e seria um caso de uso direto. Por último, uma comparação com Vision Transformers (ViT) ficaria interessante para entender os limites das CNNs nesse domínio.
 
