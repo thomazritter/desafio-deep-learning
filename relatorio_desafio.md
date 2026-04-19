@@ -2,7 +2,7 @@ Aluno: Thomaz Ritter
 
 ## 1. Introdução
 
-Minha mãe tem um pátio grande em casa e cultiva várias plantas, incluindo orquídeas. Ela estuda as plantas (comprou um livro sobre recentemente), e convivendo com isso percebi o quanto é difícil identificar problemas só olhando pra folha. Hoje em dia ela utiliza alguns apps já existentes para detectar problemas nas folhas/plantas… no entanto, antigamente ela utilizava apenas a pesquisa no Google, o que acabava ficando difícil.
+Minha mãe tem um pátio grande em casa e cultiva várias plantas, incluindo orquídeas. Ela estuda as plantas (comprou um livro sobre recentemente), e convivendo com isso percebi o quanto é difícil identificar problemas só olhando para folha. Hoje em dia ela utiliza alguns apps já existentes para detectar problemas nas folhas/plantas… no entanto, antigamente ela utilizava apenas a pesquisa no Google, o que acabava ficando difícil.
 
 Quando li o desafio, percebi que poderia tentar montar um sistema local, que ela pudesse utilizar… sem precisar usar algum app pago/existente. Esta área está em constante evolução e temos datasets ricos em features.
 
@@ -97,7 +97,23 @@ Todas as imagens são redimensionadas para 224x224 pixels (o tamanho que ResNet 
 - **Épocas:** 10. Com transfer learning, o modelo já começa com bons pesos e não precisa de muitas épocas para convergir.
 - **Batch size:** 64 imagens por vez.
 
-### 3.4 Três Experimentos
+### 3.4 Ambiente de Execução
+
+O treinamento foi feito localmente em um MacBook Pro com chip M4 Pro e 48GB de RAM, usando o backend MPS (Metal Performance Shaders) do PyTorch. O MPS permite usar a GPU integrada do Apple Silicon para acelerar operações de tensor, sem precisar de uma GPU NVIDIA/CUDA.
+
+O tempo total de treinamento dos três experimentos foi de aproximadamente 2 horas e 40 minutos:
+
+| Experimento | Tempo |
+| --- | --- |
+| ResNet18 + Aug. Leve | ~39 min |
+| ResNet50 + Aug. Leve | ~80 min |
+| ResNet18 + Aug. Agressiva | ~43 min |
+
+A ResNet50 levou o dobro da ResNet18, o que faz sentido dado o dobro de parâmetros. O log completo do treinamento com tempos por época está em [`train_log.txt`](train_log.txt).
+
+O notebook também funciona no Google Colab com GPU T4 (CUDA). Para executar, basta abrir o `.ipynb` no Colab, ativar a GPU em `Runtime > Change runtime type`, e rodar todas as células.
+
+### 3.5 Três Experimentos
 
 Desenhei três experimentos que isolam variáveis diferentes:
 
@@ -131,7 +147,7 @@ Resumindo, augmentation forte pode ajudar o modelo a generalizar melhor (especia
 | ResNet50 + Aug. Leve | 25.6M | 99.99% | 99.83% | 0.0065 |
 | ResNet18 + Aug. Agressiva | 11.7M | 99.75% | 99.74% | 0.0099 |
 
-O melhor resultado foi da **ResNet18 com augmentation leve**, alcançando 99.89% de acurácia na validação. A ResNet50, mesmo com o dobro de parâmetros, ficou ligeiramente abaixo (99.83%). A augmentation agressiva reduziu a acurácia final pra 99.74%, porém com um gap treino-validação menor (0.01% vs 0.10%).
+O melhor resultado foi da **ResNet18 com augmentation leve**, alcançando 99.89% de acurácia na validação. A ResNet50, mesmo com o dobro de parâmetros, ficou ligeiramente abaixo (99.83%). A augmentation agressiva reduziu a acurácia final para 99.74%, porém com um gap treino-validação menor (0.01% vs 0.10%).
 
 ### 4.2 Curvas de Aprendizado
 
@@ -172,7 +188,7 @@ A augmentation forte simula condições que o modelo encontraria no mundo real, 
 - **Sem augmentation:** treina rápido, acurácia alta no dataset, porém pode falhar no mundo real
 - **Com augmentation:** treina mais devagar, acurácia de treino mais baixa, porém possivelmente mais robusto
 
-Nos resultados, o gap treino-validação do Exp1 (sem augmentation forte) foi de 0.10% (99.99% treino vs 99.89% validação). No Exp3 (com augmentation agressiva), o gap caiu pra 0.01% (99.75% vs 99.74%). Ou seja, a augmentation forte cumpriu o papel de reduzir overfitting. Porém, a acurácia final ficou 0.15% abaixo do Exp1. Isso faz sentido: o PlantVillage já tem imagens padronizadas, então a augmentation extra acaba dificultando o treino sem benefício claro na validação. Em um dataset com fotos reais de campo, o resultado provavelmente seria diferente.
+Nos resultados, o gap treino-validação do Exp1 (sem augmentation forte) foi de 0.10% (99.99% treino vs 99.89% validação). No Exp3 (com augmentation agressiva), o gap caiu para 0.01% (99.75% vs 99.74%). Ou seja, a augmentation forte cumpriu o papel de reduzir overfitting. Porém, a acurácia final ficou 0.15% abaixo do Exp1. Isso faz sentido: o PlantVillage já tem imagens padronizadas, então a augmentation extra acaba dificultando o treino sem benefício claro na validação. Em um dataset com fotos reais de campo, o resultado provavelmente seria diferente.
 
 ### 5.3 Onde o modelo acaba errando?
 
@@ -233,11 +249,11 @@ Em produção, precisaríamos monitorar:
 
 ## 7. Conclusão
 
-Este projeto demonstrou que transfer learning com CNNs é uma abordagem eficaz para classificação de doenças em plantas, alcançando acurácias de validação acima de 99% no PlantVillage. Os três experimentos permitiram analisar trade-offs práticos entre profundidade da arquitetura e técnicas de data augmentation. Essas são decisões que todo profissional de IA precisa tomar no dia a dia.
+No fim das contas, transfer learning com CNNs funcionou muito bem para o PlantVillage, com os três modelos passando de 99% de acurácia na validação. O que mais me surpreendeu foi que a ResNet18 (99.89%) bateu a ResNet50 (99.83%), mesmo tendo metade dos parâmetros. Isso reforça algo que já tinha lido mas nunca visto na prática: modelo maior nem sempre é melhor, especialmente quando o dataset não é enorme.
 
-O melhor modelo foi a ResNet18 com augmentation leve (99.89%), mostrando que pra este problema não precisamos de uma rede muito profunda. A augmentation agressiva reduziu overfitting mas não melhorou a acurácia final, provavelmente porque o PlantVillage já é um dataset controlado.
+A augmentation agressiva fez o que era esperado, reduziu o gap entre treino e validação, mas no fim não melhorou o resultado. Faz sentido: o PlantVillage é um dataset de laboratório, então as transformações acabam dificultando o treino sem necessidade. Em fotos reais de campo, provavelmente o resultado seria diferente.
 
-Como próximos passos, seria interessante: (1) testar com datasets de imagens reais de campo como o PlantDoc; (2) incluir mais espécies, como orquídeas, que têm relevância pessoal e comercial; (3) explorar Vision Transformers (ViT) como alternativa às CNNs; e (4) construir um protótipo mobile para validar o uso por agricultores reais.
+Para trabalhos futuros, quero testar com o PlantDoc (que tem fotos reais, não de laboratório) e ver se a augmentation agressiva compensa nesse cenário. Também seria legal incluir orquídeas no dataset, já que minha mãe cultiva e seria um caso de uso direto. Por último, uma comparação com Vision Transformers (ViT) ficaria interessante para entender os limites das CNNs nesse domínio.
 
 ## Referências
 
