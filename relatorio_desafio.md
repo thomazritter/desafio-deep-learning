@@ -12,7 +12,7 @@ Neste trabalho, foi feito um sistema de classificação de doenças em plantas u
 
 ## 2. Definição do Problema
 
-**O que o modelo precisa fazer:** receber uma foto de uma folha e dizer, entre 38 opções, se a planta está saudável ou qual doença ela tem.
+O modelo precisa receber uma foto de uma folha e dizer, entre 38 opções, se a planta está saudável ou qual doença ela tem.
 
 Isso refere-se a um problema de **classificação multi-classe**. A entrada é uma imagem RGB e a saída é uma entre 38 classes possíveis.
 
@@ -91,11 +91,7 @@ Todas as imagens são redimensionadas para 224x224 pixels (o tamanho que ResNet 
 
 ### 3.3 Configuração de Treinamento
 
-- **Loss function:** CrossEntropyLoss. Ela mede o quão distante a distribuição de probabilidades prevista pelo modelo está da resposta correta.
-- **Otimizador:** Adam com learning rate de 0.0001. Escolhi Adam porque ele adapta o learning rate individualmente para cada parâmetro, convergindo mais rápido que SGD em muitos casos.
-- **Scheduler:** CosineAnnealingLR, que diminui o learning rate ao longo das épocas seguindo uma curva de cosseno. Isso ajuda o modelo a fazer ajustes mais finos nas últimas épocas.
-- **Épocas:** 10. Com transfer learning, o modelo já começa com bons pesos e não precisa de muitas épocas para convergir.
-- **Batch size:** 64 imagens por vez.
+Como loss function, usei CrossEntropyLoss, que mede o quão distante a distribuição de probabilidades prevista pelo modelo está da resposta correta. O otimizador é o Adam com learning rate de 0.0001. Escolhi o Adam porque ele adapta o learning rate individualmente para cada parâmetro, convergindo mais rápido que SGD em muitos casos. Para o scheduler, usei CosineAnnealingLR, que diminui o learning rate ao longo das épocas seguindo uma curva de cosseno, ajudando o modelo a fazer ajustes mais finos nas últimas épocas. O treinamento roda por 10 épocas, o que é suficiente com transfer learning já que o modelo começa com bons pesos. O batch size é de 64 imagens por vez.
 
 ### 3.4 Ambiente de Execução
 
@@ -151,11 +147,7 @@ O melhor resultado foi da **ResNet18 com augmentation leve**, alcançando 99.89%
 
 ### 4.2 Curvas de Aprendizado
 
-As curvas de acurácia e loss ao longo das 10 épocas mostram três coisas:
-
-- **Velocidade de convergência:** quantas épocas o modelo precisa para "estabilizar". Com transfer learning, a convergência é rápida, visto que já na primeira época a acurácia ultrapassa 95%.
-- **Overfitting:** se existe um gap entre a acurácia de treino e de validação. Um gap grande significa que o modelo está memorizando os dados em vez de aprender padrões.
-- **Estabilidade:** se a curva de validação oscila muito ou converge de forma suave.
+As curvas de acurácia e loss ao longo das 10 épocas mostram três coisas importantes. Primeiro, a velocidade de convergência, ou seja, quantas épocas o modelo precisa para "estabilizar". Com transfer learning, a convergência é rápida, visto que já na primeira época a acurácia ultrapassa 95%. Segundo, se existe overfitting, que é quando o gap entre a acurácia de treino e de validação fica grande, indicando que o modelo está memorizando os dados em vez de aprender padrões. Terceiro, a estabilidade, se a curva de validação oscila muito ou converge de forma suave.
 
 ![Comparação dos Três Experimentos](imagens/curvas_comparativas.png)
 
@@ -185,8 +177,7 @@ Na prática, a ResNet18 é a melhor escolha aqui: treina em metade do tempo, ocu
 
 A augmentation forte simula condições que o modelo encontraria no mundo real, que seriam folhas fotografadas tortas, com sombra, em dias nublados. O PlantVillage foi capturado em laboratório com condições perfeitas. Logo, sem augmentation o modelo aprende a classificar folhas em condições perfeitas e pode falhar quando encontrar uma foto tirada com celular.
 
-- **Sem augmentation:** treina rápido, acurácia alta no dataset, porém pode falhar no mundo real
-- **Com augmentation:** treina mais devagar, acurácia de treino mais baixa, porém possivelmente mais robusto
+Sem augmentation, o modelo treina rápido e atinge acurácia alta no dataset, porém pode falhar no mundo real. Com augmentation, o treino fica mais devagar e a acurácia de treino cai, porém o modelo tende a ser mais robusto.
 
 Nos resultados, o gap treino-validação do Exp1 (sem augmentation forte) foi de 0.10% (99.99% treino vs 99.89% validação). No Exp3 (com augmentation agressiva), o gap caiu para 0.01% (99.75% vs 99.74%). Ou seja, a augmentation forte cumpriu o papel de reduzir overfitting. Porém, a acurácia final ficou 0.15% abaixo do Exp1. Isso faz sentido: o PlantVillage já tem imagens padronizadas, então a augmentation extra acaba dificultando o treino sem benefício claro na validação. Em um dataset com fotos reais de campo, o resultado provavelmente seria diferente.
 
@@ -202,10 +193,10 @@ Os exemplos concretos de acertos e erros, junto com a matriz de confusão comple
 
 Abaixo algumas limitações do trabalho:
 
-1. **Dataset controlado.** As fotos do PlantVillage foram tiradas em laboratório com fundo uniforme. No mundo real, a foto teria solo, outras plantas e sombras. A folha pode não estar centralizada. Isso significa que a acurácia de 99% não se traduz diretamente para 99% no mundo real.
-2. **Desbalanceamento de classes.** Algumas doenças têm 5x mais imagens que outras. O modelo pode ter aprendido a "chutar" classes com mais exemplos quando está em dúvida.
-3. **Cobertura limitada.** O dataset cobre 38 combinações de planta+doença, porém existem centenas de doenças de plantas.
-4. **Apenas folhas isoladas.** Cada imagem contém uma única folha, o que não reflete o uso onde o usuário fotografaria a planta inteira.
+1. As fotos do PlantVillage foram tiradas em laboratório com fundo uniforme e iluminação controlada. No mundo real, a foto teria solo, outras plantas e sombras, e a folha pode não estar centralizada. Isso significa que a acurácia de 99% provavelmente não se mantém fora desse ambiente controlado.
+2. Algumas doenças têm 5x mais imagens que outras no dataset. O modelo pode ter aprendido a "chutar" classes com mais exemplos quando está em dúvida, inflando a acurácia geral.
+3. O dataset cobre 38 combinações de planta e doença, porém existem centenas de doenças de plantas. Qualquer doença fora dessas 38 seria classificada incorretamente como uma das existentes.
+4. Cada imagem contém uma única folha recortada, o que não reflete o uso real onde o usuário fotografaria a planta inteira ou várias folhas de uma vez.
 
 ## 6. Como colocar em produção
 
@@ -235,17 +226,11 @@ O modelo seria serializado com `torch.save()` e carregado no startup. Com **Dock
 
 Durante o treinamento, precisamos calcular gradientes e atualizar pesos. Na inferência, só precisamos do forward pass. É por isso que existem otimizações específicas para servir modelos:
 
-- **TorchScript / ONNX:** converter o modelo para um formato otimizado que não depende de Python em runtime, reduzindo latência.
-- **Batching de requisições:** acumular várias imagens e processar de uma vez na GPU, aumentando o throughput.
-- **Quantização:** converter pesos de float32 para int8, reduzindo o modelo de ~44MB para ~11MB. Isso viabiliza rodar no celular do usuário sem depender de internet.
+Uma opção é converter o modelo para TorchScript ou ONNX, formatos otimizados que não dependem de Python em runtime e reduzem a latência. Outra é fazer batching de requisições, acumulando várias imagens e processando de uma vez na GPU para aumentar o throughput. Também é possível aplicar quantização, convertendo os pesos de float32 para int8, o que reduz o modelo de ~44MB para ~11MB e viabiliza rodar no celular do usuário sem depender de internet.
 
 ### 6.3 Monitoramento
 
-Em produção, precisaríamos monitorar:
-
-- **Data drift:** as fotos dos usuários são parecidas com o treino? O PlantVillage tem fundo uniforme. Se começarem a chegar fotos com fundo complexo, a acurácia vai cair e precisamos detectar isso.
-- **Latência de inferência:** garantir tempos de resposta abaixo de 500ms para boa experiência do usuário.
-- **Feedback loop:** permitir que usuários corrijam predições erradas, gerando dados rotulados para retreinamento periódico do modelo.
+Em produção, precisaríamos monitorar algumas coisas. A primeira é o data drift: as fotos dos usuários são parecidas com o treino? O PlantVillage tem fundo uniforme, e se começarem a chegar fotos com fundo complexo, a acurácia vai cair e precisamos detectar isso. Também é importante garantir que a latência de inferência fique abaixo de 500ms para uma boa experiência do usuário. Por fim, um feedback loop seria essencial, permitindo que usuários corrijam predições erradas e gerando dados rotulados para retreinamento periódico do modelo.
 
 ## 7. Conclusão
 
