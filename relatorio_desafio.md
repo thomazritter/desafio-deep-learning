@@ -157,9 +157,13 @@ Nos três experimentos, a convergência foi rápida, e já na primeira época a 
 
 ### 4.3 Análise por Classe
 
-O classification report e a matriz de confusão do melhor modelo estão no notebook. As métricas por classe (precision, recall, F1-score) mostram onde o modelo erra mais.
+A matriz de confusão do melhor modelo (ResNet18 + Aug. Leve) mostra que a grande maioria das predições caiu na diagonal principal, ou seja, foram acertos. De 10.861 imagens de validação, apenas 12 foram classificadas erradas.
 
-Os detalhes por classe estão no notebook. De forma geral, as classes com pior desempenho são doenças visualmente similares dentro da mesma espécie (ex: diferentes doenças de tomate), algo que será discutido na seção 5.3.
+![Matriz de Confusão](imagens/matriz_confusao.png)
+
+As métricas por classe (precision, recall, F1-score) estão detalhadas no [`classification_report.txt`](classification_report.txt). De forma geral, as classes com pior desempenho são doenças visualmente similares dentro da mesma espécie (ex: diferentes doenças de tomate), algo que será discutido na seção 5.3.
+
+![Top 5 Classes com Pior Desempenho](imagens/piores_classes.png)
 
 ## 5. Análise e Trade-offs
 
