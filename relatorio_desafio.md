@@ -48,17 +48,9 @@ O objetivo aqui é avaliar um trade-off. Mais parâmetros sempre significam melh
 
 Em aula vimos os **Transformers**, originalmente criados para processamento de linguagem natural, mas que também podem ser aplicados a visão computacional. O **Vision Transformer (ViT)** divide a imagem em pequenos pedaços e trata cada pedaço como um "token", aplicando o mecanismo de **self-attention** para aprender relações entre regiões distantes da imagem.
 
-Transformers têm uma vantagem teórica, onde o mecanismo de atenção consegue capturar relações globais na imagem desde a primeira camada. CNNs precisam empilhar muitas camadas convolucionais para que o campo receptivo cubra a imagem inteira, logo ficam limitadas no começo.
+Transformers têm a vantagem de capturar relações globais na imagem desde a primeira camada, enquanto CNNs precisam empilhar muitas camadas convolucionais para que o campo receptivo cubra a imagem inteira.
 
-Se fizermos uma tabela para comparação:
-
-|  | ViT | CNN |
-| --- | --- | --- |
-| Atenção | Global desde a primeira camada | Receptive field cresce gradualmente |
-| Dados | Precisa de mais dados para treinar bem | Inductive bias ajuda com poucos dados |
-| Escala | Melhora com mais dados/compute | Mais eficiente em escala menor |
-
-Então por que optei por CNNs neste projeto? Seguem algumas razões:
+Então por que optei por CNNs neste projeto?
 
 1. ViTs precisam de mais dados, e o PlantVillage que usamos tem 54k imagens, que acabou ficando mais confortável para CNNs.
 2. ViT demoraria muito mais por causa do self-attention, que tem complexidade quadrática em relação ao número de pedaços.
